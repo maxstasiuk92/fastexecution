@@ -11,33 +11,26 @@ import fastexecution.ProcessorException;
 import fastexecution.ProcessorThread;
 import fastexecution.Processor;
 
-public abstract class AbstractProcessor<T> implements Processor {
-	protected final T coordinator;
+public abstract class AbstractProcessor implements Processor {
 	protected final List<ProcessorThread> processorThreads;
-	protected final AtomicBoolean changingThreadNumber;
 	protected final AtomicInteger effectiveThreadNumber;
-	protected final AtomicBoolean running;
-	
+		
 	/**
 	 * @exception ProcessorException if did not start single non-extra thread
 	 * (see {@link #setThreadNumber(int) setExtraThreadNumber})
 	 */		
-	public AbstractProcessor(T coordinator) throws ProcessorException {
-		this.coordinator = coordinator;
+	public AbstractProcessor() throws ProcessorException {
 		//Collections.synchronizedList(...) has not synchronized iterator 
 		this.processorThreads = new LinkedList<ProcessorThread>();
-		this.changingThreadNumber = new AtomicBoolean(false);
 		this.effectiveThreadNumber = new AtomicInteger(0);
-		this.running = new AtomicBoolean(false);
 	}
 	
 	@Override
-	public boolean start() {
-		if (running.get()) {
+	public synchronized boolean start() {
+		if (isRunning()) {
 			return true;
 		}
 		if (startThreads(1) == 1) {
-			running.set(true);
 			return true;
 		} else {
 			return false;
@@ -45,26 +38,25 @@ public abstract class AbstractProcessor<T> implements Processor {
 	}
 	
 	@Override
-	public boolean stop() {
-		if (!running.get()) {
+	public synchronized boolean stop() {
+		if (!isRunning()) {
 			return true;
 		}
 		if (stopThreads(effectiveThreadNumber.get()) < 0) {
 			return false;
 		} else {
-			running.set(false);
 			return true;
 		}
 	}
 	
 	@Override
 	public boolean isRunning() {
-		return running.get();
+		return effectiveThreadNumber.get() > 0;
 	}
 		
 	@Override
-	public int setThreadNumber(int threadNumber) {
-		if (threadNumber < 0 || !running.get()) {
+	public synchronized int setThreadNumber(int threadNumber) {
+		if (threadNumber < 0 || !isRunning()) {
 			return -1;
 		}
 		if (threadNumber == 0) {
@@ -98,18 +90,11 @@ public abstract class AbstractProcessor<T> implements Processor {
 		return processorThreadsSize == effectiveThreadNumber.get();
 	}
 	
-	protected int startThreads(int number) {
-		synchronized (changingThreadNumber) {
-			if (changingThreadNumber.get()) {
-				return -1;
-			} else {
-				changingThreadNumber.set(true);
-			}
-		}
+	private int startThreads(int number) {
 		int started = 0;
 		ProcessorThread processorThread;
 		ArrayList<ProcessorThread> newProcessorThreads = new ArrayList<>(number);
-		while (started < number && (processorThread = getProcessorThread(this::onThreadStopped, coordinator)) != null) {
+		while (started < number && (processorThread = getProcessorThread(this::onThreadStopped)) != null) {
 			newProcessorThreads.add(processorThread);
 			Thread thread = new Thread(processorThread);
 			thread.start();
@@ -119,18 +104,10 @@ public abstract class AbstractProcessor<T> implements Processor {
 			processorThreads.addAll(newProcessorThreads);
 		}
 		effectiveThreadNumber.addAndGet(started);
-		changingThreadNumber.set(false);
 		return started;
 	}
 	
-	protected int stopThreads(int number) {
-		synchronized (changingThreadNumber) {
-			if (changingThreadNumber.get()) {
-				return -1;
-			} else {
-				changingThreadNumber.set(true);
-			}
-		}
+	private int stopThreads(int number) {
 		int stopped = 0;
 		synchronized (processorThreads) {
 			var iterator = processorThreads.iterator(); //iterator is not concurrent -> quite fast
@@ -146,7 +123,6 @@ public abstract class AbstractProcessor<T> implements Processor {
 			throw new ProcessorException("number of stopped threads is not equal to requested number");
 		}
 		effectiveThreadNumber.addAndGet(-stopped);
-		changingThreadNumber.set(false);
 		return stopped;
 	}
 	
@@ -172,5 +148,5 @@ public abstract class AbstractProcessor<T> implements Processor {
 	/**
 	 * ProcessorThread should be activated by default
 	 */
-	protected abstract ProcessorThread getProcessorThread(ProcessorCallback callback, T coordinator);
+	protected abstract ProcessorThread getProcessorThread(ProcessorCallback callback);
 }

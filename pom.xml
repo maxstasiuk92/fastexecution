@@ -8,7 +8,22 @@
 	<version>0.9</version>
 	<packaging>jar</packaging>
 	<name>fastexecution</name>
-
+	
+	<profiles>
+		<profile>
+			<id>conservative</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+		</profile>
+		
+		<profile>
+			<id>skip-tests</id>
+			<properties>
+				<maven.test.skip>true</maven.test.skip>
+			</properties>
+		</profile>
+	</profiles>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

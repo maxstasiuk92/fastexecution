@@ -46,7 +46,7 @@ public class Tests {
 		final int actionNumber = 1000; //each thread will start/stop this number of times
 		getThreadsInGroup();
 		printThreadsInGroup("concurrentRunStopCheck");
-		EmptyProcessor processor = new EmptyProcessor(null);
+		EmptyProcessor processor = new EmptyProcessor();
 		ExecutorService testService = Executors.newFixedThreadPool(2);
 		Future<Integer> starterResult = testService.submit(()->{
 										int n = 0;
@@ -86,7 +86,7 @@ public class Tests {
 		final int actionNumber = 300; //each thread will modify processor threads this number of times
 		getThreadsInGroup();
 		printThreadsInGroup("concurrentThreadNumberChangeCheck");
-		EmptyProcessor processor = new EmptyProcessor(null);
+		EmptyProcessor processor = new EmptyProcessor();
 		startProcessor(processor);
 		//submit actors
 		ExecutorService testService = Executors.newFixedThreadPool(actorNumber);
@@ -133,7 +133,7 @@ public class Tests {
 		final int finalThreadNumber = 20;
 		getThreadsInGroup();
 		printThreadsInGroup("increaseThreadNumberCheck");
-		EmptyProcessor processor = new EmptyProcessor(null);
+		EmptyProcessor processor = new EmptyProcessor();
 		startProcessor(processor);
 		//increase extra threads; check that numbers are growing
 		int retNum = 0;
@@ -160,7 +160,7 @@ public class Tests {
 		final int initialThreadNumber = 20;
 		getThreadsInGroup();
 		printThreadsInGroup("decreaseThreadNumberCheck");
-		EmptyProcessor processor = new EmptyProcessor(null);
+		EmptyProcessor processor = new EmptyProcessor();
 		startProcessor(processor);
 		//set initial number of extra threads
 		processor.setThreadNumber(initialThreadNumber);

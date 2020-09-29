@@ -6,14 +6,14 @@ import fastexecution.ProcessorThread;
 import fastexecution.processors.AbstractProcessor;
 import fastexecution.threads.AbstractThread;
 
-public class EmptyProcessor extends AbstractProcessor<Object>{
+public class EmptyProcessor extends AbstractProcessor{
 
-	public EmptyProcessor(Object coordinator) throws ProcessorException {
-		super(coordinator);
+	public EmptyProcessor() throws ProcessorException {
+		super();
 	}
 	
 	@Override
-	protected ProcessorThread getProcessorThread(ProcessorCallback callback, Object coordinator) {
+	protected ProcessorThread getProcessorThread(ProcessorCallback callback) {
 		return new EmptyThread(callback);
 	}
 
